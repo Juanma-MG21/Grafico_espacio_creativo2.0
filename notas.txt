@@ -1,0 +1,42 @@
+Verificaciones de entorno
+node -v
+npm -v
+
+
+Creacion del proyecto
+npm create vite@latest nombre-del-proyecto -- --template react
+cd nombre-del-proyecto
+npm install
+
+Instalacion de TAILWIND V4
+npm install -D tailwindcss @tailwindcss/postcss postcss autoprefixer
+
+================================================
+EN CASO DE PROBLEMAS
+================================================
+Crear postcss.config.js
+
+export default {
+  plugins: {
+    "@tailwindcss/postcss": {},
+    autoprefixer: {},
+  }
+}
+
+
+---------------------------------
+
+Limpiar src/index.css
+
+@import "tailwindcss";
+
+----------------------------------
+NECESARIO para el funcionamiento de las particulas de "contactenos"
+npm install @tsparticles/react @tsparticles/slim
+
+Conexion de flask con react
+pip install flask-cors
+
+
+==================================================================================================
+VERIFICAR "TRABAJOS" en este caso Galeria.jsx y ObraModal.jsx

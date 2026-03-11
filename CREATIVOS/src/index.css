@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+/* ── Entrada suave de la app tras el Intro ── */
+.fade-in-web {
+  animation: fadeInWeb 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes fadeInWeb {
+  from { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+  to   { opacity: 1; filter: blur(0);    transform: scale(1); }
+}
+
+/* ── Animaciones del slider de Contacto ── */
+@keyframes slide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes slideRev {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}

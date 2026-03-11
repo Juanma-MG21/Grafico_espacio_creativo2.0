@@ -1,0 +1,9 @@
+1- se elimina "src/app.css" debido a que se va a utilizar tailwindcss
+2- Se borran las imagenes .svg
+3- Se crearon tres carpetas nuevas (con ayuda del comando mkdir):
+components/: Aquí pondrás piezas reutilizables (Botones, Navbar, Footer).
+pages/: Aquí irán las secciones completas (Home, Login, Contacto).
+assets/: Aquí mueve tus imágenes, logos y fuentes de tu proyecto anterior.
+4- Se creo una nueva carpeta (BACKEND) en la misma jerjarquia de creativos (FRONTEND) que sera la encargada
+de manejar flask y trabajar junto con react
+5- se instalo otra dependencia "npm install react-router-dom", ¿que hace?, no sé. me duele la cabeza
