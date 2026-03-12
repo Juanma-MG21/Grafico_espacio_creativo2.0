@@ -6,15 +6,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
 
-import cloudinary
-import cloudinary.uploader
+# import cloudinary
+# import cloudinary.uploader
 
-cloudinary.config(
-    cloud_name="TU_CLOUD_NAME",
-    api_key="TU_API_KEY",
-    api_secret="TU_API_SECRET",
-    secure=True
-)
+
+# cloudinary.config(
+#     cloud_name="TU_CLOUD_NAME",
+#     api_key="TU_API_KEY",
+#     api_secret="TU_API_SECRET",
+#     secure=True
+# )
+
+
 
 
 app = Flask(__name__)
@@ -46,9 +49,10 @@ import mysql.connector
 # Diccionario de configuración
 db_config = {
     'host': 'localhost',
-    'user': 'arcadia',
+    'user': 'arcadia_user',
     'password': 'password',
-    'database': 'espaciocreativo'
+    'database': 'Espaciocreativo$Arcadia',
+    'charset': 'utf8mb4'
 }
 
 
@@ -546,10 +550,6 @@ def logout():
     flash('Has cerrado sesión exitosamente', 'success')
     return redirect(url_for('index'))
 
-# ----------------------------------------------------------------------
-if __name__ == '__main__':
-    app.run(debug=True)
-
 # ======================================================================
 # = = = > API JSON para React < = = =
 # Estas rutas son exclusivas para el frontend React.
@@ -874,3 +874,7 @@ def api_eliminar_usuario_json(id):
     finally:
         cursor.close()
         conexion.close()
+
+# ----------------------------------------------------------------------
+if __name__ == '__main__':
+    app.run(debug=True)
