@@ -44,7 +44,7 @@ export default function Navbar() {
           className="h-full p-4 bg-center bg-cover bg-no-repeat space-y-2 pt-16"
           style={{ backgroundImage: "url('/src/assets/jupa.png')" }}
         >
-          <MenuItem icon="/src/assets/INICIO.png"    onClick={() => go('/')} />
+          {/* <MenuItem icon="/src/assets/INICIO.png"    onClick={() => go('/')} /> */}
           <MenuItem icon="/src/assets/TRABAJOS.png"  onClick={() => go('/trabajos')} />
           <MenuItem icon="/src/assets/SOBRE_MI.png"  onClick={() => go('/SobreMi')} />
           <MenuItem icon="/src/assets/CONTACTO.png"  onClick={() => go('/contacto')} />
@@ -52,7 +52,7 @@ export default function Navbar() {
           {isLoggedIn && isAdmin && (
             <>
               <hr className="border-slate-300 my-2" />
-              <MenuItem icon="/src/assets/galeria.png"  onClick={() => go('/obras')} />
+              {/* <MenuItem icon="/src/assets/galeria.png"  onClick={() => go('/obras')} /> */}
               <MenuItem icon="/src/assets/usuario.png"  onClick={() => go('/usuarios')} />
               <MenuItem icon="/src/assets/agregar.png"  onClick={() => go('/artic')} />
             </>

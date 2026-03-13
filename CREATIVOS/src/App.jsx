@@ -19,7 +19,7 @@ function Layout() {
       <Navbar />
       <main>
         <Routes>
-          <Route path="/"                          element={<SobreMi />} />
+          <Route path="/SobreMi"                          element={<SobreMi />} />
           <Route path="/trabajos"                  element={<Galeria />} />
           <Route path="/contacto"                  element={<Contacto />} />
           <Route path="/login"                     element={<Login />} />

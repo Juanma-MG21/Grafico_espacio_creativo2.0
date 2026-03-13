@@ -10,14 +10,14 @@ export default function ActualizarObra() {
   const { isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [obra,         setObra]         = useState(null);
-  const [secundarias,  setSecundarias]  = useState([]);
-  const [eliminar,     setEliminar]     = useState([]); // ids a eliminar
-  const [nuevasImgs,   setNuevasImgs]   = useState([]);
-  const [nuevaPrinc,   setNuevaPrinc]   = useState(null);
-  const [mensaje,      setMensaje]      = useState({ texto: "", tipo: "" });
-  const [loading,      setLoading]      = useState(false);
-  const [fetching,     setFetching]     = useState(true);
+  const [obra,        setObra]        = useState(null);
+  const [secundarias, setSecundarias] = useState([]);
+  const [eliminar,    setEliminar]    = useState([]);
+  const [nuevasImgs,  setNuevasImgs]  = useState([]); // acumuladas
+  const [nuevaPrinc,  setNuevaPrinc]  = useState(null);
+  const [mensaje,     setMensaje]     = useState({ texto: "", tipo: "" });
+  const [loading,     setLoading]     = useState(false);
+  const [fetching,    setFetching]    = useState(true);
 
   useEffect(() => {
     if (!isAdmin && !authLoading) return;
@@ -52,6 +52,20 @@ export default function ActualizarObra() {
 
   const handleChange = (e) =>
     setObra({ ...obra, [e.target.name]: e.target.value });
+
+  // Acumula nuevas imágenes secundarias sin reemplazar
+  const handleNuevasSecundarias = (e) => {
+    const nuevos = Array.from(e.target.files);
+    setNuevasImgs((prev) => {
+      const nombres = new Set(prev.map((f) => f.name));
+      const sinDuplicados = nuevos.filter((f) => !nombres.has(f.name));
+      return [...prev, ...sinDuplicados];
+    });
+    e.target.value = "";
+  };
+
+  const quitarNueva = (nombre) =>
+    setNuevasImgs((prev) => prev.filter((f) => f.name !== nombre));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -111,8 +125,8 @@ export default function ActualizarObra() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
             {[
-              { name: "titulo",       label: "Título",      required: true },
-              { name: "materiales",   label: "Materiales",  required: false },
+              { name: "titulo",     label: "Título",     required: true },
+              { name: "materiales", label: "Materiales", required: false },
             ].map(({ name, label, required }) => (
               <div key={name} className="flex flex-col gap-1.5">
                 <label className="text-white/40 text-[11px] uppercase tracking-wider"
@@ -129,13 +143,12 @@ export default function ActualizarObra() {
               <label className="text-white/40 text-[11px] uppercase tracking-wider"
                      style={{ fontFamily: "DM Mono, monospace" }}>Descripción</label>
               <textarea
-                name="descripcion" rows={4} required value={obra?.descripcion || ""}
+                name="descripcion" rows={4} value={obra?.descripcion || ""}
                 onChange={handleChange}
                 className="w-full p-3 text-white bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:outline-none transition-all resize-none"
               />
             </div>
 
-            {/* Dimensiones */}
             <div>
               <label className="block text-white/40 text-[11px] uppercase tracking-wider mb-2"
                      style={{ fontFamily: "DM Mono, monospace" }}>Dimensiones (cm)</label>
@@ -163,7 +176,6 @@ export default function ActualizarObra() {
               </div>
             )}
 
-            {/* Nueva imagen principal */}
             <div className="flex flex-col gap-1.5">
               <label className="text-white/40 text-[11px] uppercase tracking-wider"
                      style={{ fontFamily: "DM Mono, monospace" }}>Nueva imagen principal (opcional)</label>
@@ -174,12 +186,12 @@ export default function ActualizarObra() {
               />
             </div>
 
-            {/* Imágenes secundarias actuales */}
+            {/* Secundarias existentes — click para marcar eliminación */}
             {secundarias.length > 0 && (
               <div className="flex flex-col gap-2">
                 <label className="text-white/40 text-[11px] uppercase tracking-wider"
                        style={{ fontFamily: "DM Mono, monospace" }}>
-                  Imágenes secundarias — click para marcar eliminación
+                  Imágenes secundarias actuales — click para marcar eliminación
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {secundarias.map((img) => (
@@ -209,15 +221,37 @@ export default function ActualizarObra() {
               </div>
             )}
 
-            {/* Nuevas secundarias */}
-            <div className="flex flex-col gap-1.5">
+            {/* Nuevas secundarias acumulables */}
+            <div className="flex flex-col gap-2">
               <label className="text-white/40 text-[11px] uppercase tracking-wider"
                      style={{ fontFamily: "DM Mono, monospace" }}>Agregar nuevas imágenes secundarias</label>
               <input
                 type="file" accept="image/*" multiple
-                onChange={(e) => setNuevasImgs(Array.from(e.target.files))}
+                onChange={handleNuevasSecundarias}
                 className="text-white/50 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/10 file:text-white file:text-xs file:cursor-pointer hover:file:bg-white/20"
               />
+              {nuevasImgs.length > 0 && (
+                <>
+                  <p className="text-white/30 text-[10px]" style={{ fontFamily: "DM Mono, monospace" }}>
+                    {nuevasImgs.length} nueva(s) — hover para quitar
+                  </p>
+                  <div className="flex flex-wrap gap-3 mt-1">
+                    {nuevasImgs.map((f) => (
+                      <div key={f.name} className="relative group">
+                        <img
+                          src={URL.createObjectURL(f)}
+                          className="w-20 h-20 object-cover rounded-xl border border-white/10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => quitarNueva(f.name)}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >×</button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex gap-3 pt-2">

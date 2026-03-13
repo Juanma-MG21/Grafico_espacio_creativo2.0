@@ -19,7 +19,7 @@ export default function AgregarObra() {
   const { isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [form, setForm]       = useState({
+  const [form, setForm] = useState({
     titulo: "", descripcion: "", materiales: "",
     medidas_largo: "", medidas_ancho: "", medidas_alto: "",
     categoria: "",
@@ -41,10 +41,23 @@ export default function AgregarObra() {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  // Acumula archivos nuevos sin reemplazar los ya seleccionados
+  const handleSecundarias = (e) => {
+    const nuevos = Array.from(e.target.files);
+    setImgSecundarias((prev) => {
+      const nombres = new Set(prev.map((f) => f.name));
+      const sinDuplicados = nuevos.filter((f) => !nombres.has(f.name));
+      return [...prev, ...sinDuplicados];
+    });
+    e.target.value = ""; // reset input para permitir re-selección
+  };
+
+  const quitarSecundaria = (nombre) =>
+    setImgSecundarias((prev) => prev.filter((f) => f.name !== nombre));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar tamaño de imágenes
     if (imgPrincipal && imgPrincipal.size > MAX_MB)
       return setMensaje({ texto: "La imagen principal supera 5MB", tipo: "error" });
     for (const img of imgSecundarias)
@@ -85,7 +98,6 @@ export default function AgregarObra() {
       <section className="min-h-screen bg-[#0c0b0a] px-6 md:px-14 pt-24 pb-20">
         <div className="max-w-2xl mx-auto">
 
-          {/* Encabezado */}
           <div className="mb-10 border-b border-white/8 pb-6">
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white/90 uppercase"
                 style={{ fontFamily: "Cinzel, serif" }}>
@@ -93,7 +105,6 @@ export default function AgregarObra() {
             </h1>
           </div>
 
-          {/* Mensaje */}
           {mensaje.texto && (
             <div className={`mb-6 p-3 rounded-xl text-sm font-semibold ${
               mensaje.tipo === "success"
@@ -118,7 +129,6 @@ export default function AgregarObra() {
               <input name="materiales" value={form.materiales} onChange={handleChange} />
             </Field>
 
-            {/* Dimensiones */}
             <div>
               <label className="block text-white/40 text-[11px] uppercase tracking-wider mb-2"
                      style={{ fontFamily: "DM Mono, monospace" }}>
@@ -145,28 +155,60 @@ export default function AgregarObra() {
               />
             </Field>
 
-            <Field label="Imágenes secundarias">
+            {/* Secundarias acumulables con previsualización */}
+            <div className="flex flex-col gap-2">
+              <label className="text-white/40 text-[11px] uppercase tracking-wider"
+                     style={{ fontFamily: "DM Mono, monospace" }}>
+                Imágenes secundarias
+              </label>
               <input
                 type="file" accept="image/*" multiple
-                onChange={(e) => setImgSecundarias(Array.from(e.target.files))}
+                onChange={handleSecundarias}
                 className="text-white/50 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/10 file:text-white file:text-xs file:cursor-pointer hover:file:bg-white/20"
               />
               {imgSecundarias.length > 0 && (
-                <p className="text-white/30 text-[10px] mt-1" style={{ fontFamily: "DM Mono, monospace" }}>
-                  {imgSecundarias.length} archivo(s) seleccionado(s)
-                </p>
+                <>
+                  <p className="text-white/30 text-[10px]" style={{ fontFamily: "DM Mono, monospace" }}>
+                    {imgSecundarias.length} archivo(s) — hover para quitar
+                  </p>
+                  <div className="flex flex-wrap gap-3 mt-1">
+                    {imgSecundarias.map((f) => (
+                      <div key={f.name} className="relative group">
+                        <img
+                          src={URL.createObjectURL(f)}
+                          className="w-20 h-20 object-cover rounded-xl border border-white/10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => quitarSecundaria(f.name)}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >×</button>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
-            </Field>
+            </div>
 
             <Field label="Categoría" required>
-              <select name="categoria" required value={form.categoria} onChange={handleChange}
-                      className={inputCls + " bg-[#1a1a18]"}>
-                <option value="" disabled>Seleccione una categoría</option>
+              <select 
+                name="categoria" 
+                required 
+                value={form.categoria} 
+                onChange={handleChange}
+                className="w-full p-3 text-white bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:outline-none transition-all appearance-none cursor-pointer"
+              >
+                <option value="" disabled className="text-white/30 bg-[#1a1a18]">
+                  Seleccione una categoría
+                </option>
                 {CATEGORIAS.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                  <option key={c.value} value={c.value} className="text-white bg-[#1a1a18]">
+                    {c.label}
+                  </option>
                 ))}
               </select>
             </Field>
+
 
             <div className="flex gap-3 pt-2">
               <button

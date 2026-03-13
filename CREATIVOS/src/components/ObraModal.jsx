@@ -2,20 +2,24 @@ import { useState, useEffect, useRef } from "react";
 import ImageVisor from "./ImageVisor";
 
 export default function ObraModal({ obra, apiBase, isAdmin, onClose, onDelete }) {
-  const [thumbnails, setThumbnails] = useState([]);
-  const [mainImg, setMainImg]       = useState(`${apiBase}/static/uploads/${obra.imagen_principal}`);
-  const [visorOpen, setVisorOpen]   = useState(false);
-  const [visorIndex, setVisorIndex] = useState(0);
-  const thumbRef                    = useRef(null);
+  const [secundarias, setSecundarias] = useState([]);
+  // selectedImg: la imagen que se muestra grande (empieza en la principal)
+  const [selectedImg, setSelectedImg] = useState(`${apiBase}/static/uploads/${obra.imagen_principal}`);
+  const [visorOpen,   setVisorOpen]   = useState(false);
+  const [visorIndex,  setVisorIndex]  = useState(0);
+  const thumbRef = useRef(null);
 
-  const allImages = [mainImg, ...thumbnails.filter((t) => t !== mainImg)];
+  const principalUrl = `${apiBase}/static/uploads/${obra.imagen_principal}`;
+
+  // allImages: principal siempre primero, luego las secundarias
+  // Se usa para el visor y para los thumbnails
+  const allImages = [principalUrl, ...secundarias];
 
   const medidas =
     obra.medidas_ancho && !String(obra.medidas_ancho).includes("None")
       ? `${obra.medidas_ancho} x ${obra.medidas_largo} x ${obra.medidas_alto} cm`
       : null;
 
-  // Cargar imágenes secundarias — ruta API corregida
   useEffect(() => {
     fetch(`${apiBase}/api/imagenes_secundarias/${obra.id}`, { credentials: "include" })
       .then((r) => r.json())
@@ -23,10 +27,28 @@ export default function ObraModal({ obra, apiBase, isAdmin, onClose, onDelete })
         const urls = (data || []).map((src) =>
           src.startsWith("http") ? src : `${apiBase}${src}`
         );
-        setThumbnails(urls);
+        setSecundarias(urls);
       })
-      .catch(() => setThumbnails([]));
+      .catch(() => setSecundarias([]));
   }, [obra.id, apiBase]);
+
+  // Bloquea scroll sin desplazar la página
+  useEffect(() => {
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e) => { if (e.key === "Escape") onClose(); };
@@ -38,9 +60,13 @@ export default function ObraModal({ obra, apiBase, isAdmin, onClose, onDelete })
     thumbRef.current?.scrollBy({ left: dir * 150, behavior: "smooth" });
 
   const openVisor = () => {
-    setVisorIndex(allImages.indexOf(mainImg));
+    setVisorIndex(allImages.indexOf(selectedImg));
     setVisorOpen(true);
   };
+
+  // Los thumbnails muestran TODAS las imágenes (principal + secundarias)
+  // La que está seleccionada se resalta en naranja
+  const thumbnailImages = allImages;
 
   return (
     <>
@@ -68,13 +94,13 @@ export default function ObraModal({ obra, apiBase, isAdmin, onClose, onDelete })
             ×
           </button>
 
-          {/* Imagen principal */}
+          {/* Imagen principal (la seleccionada) */}
           <div
             className="relative md:w-[58%] bg-black flex items-center justify-center overflow-hidden"
             style={{ minHeight: "280px" }}
           >
             <img
-              src={mainImg}
+              src={selectedImg}
               alt={obra.titulo}
               className="max-w-full max-h-full object-contain"
               style={{ maxHeight: "90vh" }}
@@ -88,7 +114,7 @@ export default function ObraModal({ obra, apiBase, isAdmin, onClose, onDelete })
             </button>
           </div>
 
-          {/* Info */}
+          {/* Info + thumbnails */}
           <div className="md:w-[42%] flex flex-col justify-between p-6 modal-scroll overflow-y-auto">
             <div className="flex flex-col gap-4">
               <h2
@@ -143,27 +169,27 @@ export default function ObraModal({ obra, apiBase, isAdmin, onClose, onDelete })
               )}
             </div>
 
-            {/* Thumbnails */}
-            {thumbnails.length > 0 && (
+            {/* Thumbnails: muestra TODAS (principal + secundarias) */}
+            {thumbnailImages.length > 1 && (
               <div className="mt-6">
                 <div className="relative flex items-center gap-2">
-                  {thumbnails.length > 4 && (
+                  {thumbnailImages.length > 4 && (
                     <button
                       onClick={() => scrollThumbs(-1)}
                       className="shrink-0 w-7 h-7 rounded-full bg-orange-500 hover:bg-orange-400 text-white text-xs flex items-center justify-center transition-colors"
                     >‹</button>
                   )}
                   <div ref={thumbRef} className="thumb-row flex gap-2 overflow-x-auto flex-1">
-                    {thumbnails.map((src, i) => (
+                    {thumbnailImages.map((src, i) => (
                       <img
                         key={i} src={src} alt=""
-                        onClick={() => setMainImg(src)}
+                        onClick={() => setSelectedImg(src)}
                         className="shrink-0 w-14 h-14 object-cover rounded-lg cursor-pointer border-2 transition-all duration-200 hover:scale-105"
-                        style={{ borderColor: mainImg === src ? "rgb(249,115,22)" : "transparent" }}
+                        style={{ borderColor: selectedImg === src ? "rgb(249,115,22)" : "transparent" }}
                       />
                     ))}
                   </div>
-                  {thumbnails.length > 4 && (
+                  {thumbnailImages.length > 4 && (
                     <button
                       onClick={() => scrollThumbs(1)}
                       className="shrink-0 w-7 h-7 rounded-full bg-orange-500 hover:bg-orange-400 text-white text-xs flex items-center justify-center transition-colors"

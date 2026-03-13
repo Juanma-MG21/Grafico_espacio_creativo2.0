@@ -1,8 +1,18 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "../hooks/useAuth";
 import ObraModal from "./ObraModal";
 
 const API = "http://localhost:5000";
+
+const CATEGORIAS = [
+  { id: 3, nombre: "Aerografía"    },
+  { id: 6, nombre: "Esculturas"    },
+  { id: 1, nombre: "Armas"         },
+  { id: 4, nombre: "Imantados"     },
+  { id: 5, nombre: "Metalmecánica" },
+  { id: 2, nombre: "Publicidad"    },
+];
 
 export default function Galeria() {
   const { isAdmin }             = useAuth();
@@ -47,63 +57,94 @@ export default function Galeria() {
         .obra-card { animation: fadeUp 0.5s ease both; }
       `}</style>
 
-      <section className="min-h-screen bg-[#0c0b0a] px-6 md:px-14 pt-24 pb-20">
+      {isAdmin ? (
 
-        {/* Encabezado */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 border-b border-white/8 pb-8">
-          <h1
-            className="text-[15vw] md:text-[7vw] font-black leading-none tracking-tighter text-white/90 uppercase"
-            style={{ fontFamily: "Cinzel, serif" }}
-          >
-            Obras
-          </h1>
-          <p
-            className="text-white/25 text-[10px] uppercase tracking-[0.35em] md:mb-2"
-            style={{ fontFamily: "DM Mono, monospace" }}
-          >
-            {obras.length} piezas en total
-          </p>
-        </div>
-
-        {/* Loading */}
-        {loading && (
-          <div className="flex justify-center items-center h-64">
-            <div className="w-8 h-8 border border-white/20 border-t-white/70 rounded-full animate-spin" />
+        /* ── VISTA ADMIN: código original intacto ── */
+        <section className="min-h-screen bg-[#0c0b0a] px-6 md:px-14 pt-24 pb-20">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 border-b border-white/8 pb-8">
+            <h1
+              className="text-[15vw] md:text-[7vw] font-black leading-none tracking-tighter text-white/90 uppercase"
+              style={{ fontFamily: "Cinzel, serif" }}
+            >
+              Obras
+            </h1>
+            <p className="text-white/25 text-[10px] uppercase tracking-[0.35em] md:mb-2"
+               style={{ fontFamily: "DM Mono, monospace" }}>
+              {obras.length} piezas en total
+            </p>
           </div>
-        )}
+          {loading && (
+            <div className="flex justify-center items-center h-64">
+              <div className="w-8 h-8 border border-white/20 border-t-white/70 rounded-full animate-spin" />
+            </div>
+          )}
+          {error && (
+            <p className="text-center text-red-400/70 text-sm py-20"
+               style={{ fontFamily: "DM Mono, monospace" }}>{error}</p>
+          )}
+          {!loading && !error && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {obras.map((obra, i) => (
+                <GalleryCard key={obra.id} obra={obra} index={i} apiBase={API} onClick={() => setSelected(obra)} />
+              ))}
+            </div>
+          )}
+        </section>
 
-        {/* Error */}
-        {error && (
-          <p className="text-center text-red-400/70 text-sm py-20"
-             style={{ fontFamily: "DM Mono, monospace" }}>
-            {error}
-          </p>
-        )}
+      ) : (
 
-        {/* Grilla */}
-        {!loading && !error && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {obras.map((obra, i) => (
-              <GalleryCard
-                key={obra.id}
-                obra={obra}
-                index={i}
-                apiBase={API}
-                onClick={() => setSelected(obra)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+        /* ── VISTA USUARIO: separado por categorías ── */
+        <section className="min-h-screen bg-[#0c0b0a] px-6 md:px-14 pt-24 pb-20">
+          {loading && (
+            <div className="flex justify-center items-center h-64">
+              <div className="w-8 h-8 border border-white/20 border-t-white/70 rounded-full animate-spin" />
+            </div>
+          )}
+          {error && (
+            <p className="text-center text-red-400/70 text-sm py-20"
+               style={{ fontFamily: "DM Mono, monospace" }}>{error}</p>
+          )}
+          {!loading && !error && CATEGORIAS.map((cat) => {
+            const obrasCat = obras.filter((o) => Number(o.categoria) === cat.id);
+            if (obrasCat.length === 0) return null;
+            return (
+              <div key={cat.id} className="mb-20">
 
-      {selected && (
+                {/* Separador de categoría — estilo editorial */}
+                <div className="flex items-end gap-5 mb-8 border-b border-white/8 pb-5">
+                  <h2
+                    className="text-[12vw] md:text-[6vw] font-black leading-none tracking-tighter text-white/90 uppercase"
+                    style={{ fontFamily: "Cinzel, serif" }}
+                  >
+                    {cat.nombre}
+                  </h2>
+                  <p className="text-white/25 text-[10px] uppercase tracking-[0.35em] mb-1"
+                     style={{ fontFamily: "DM Mono, monospace" }}>
+                    {obrasCat.length} {obrasCat.length === 1 ? "pieza" : "piezas"}
+                  </p>
+                </div>
+
+                {/* Grilla de esta categoría */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {obrasCat.map((obra, i) => (
+                    <GalleryCard key={obra.id} obra={obra} index={i} apiBase={API} onClick={() => setSelected(obra)} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {selected && createPortal(
         <ObraModal
           obra={selected}
           apiBase={API}
           isAdmin={isAdmin}
           onClose={() => setSelected(null)}
           onDelete={handleDelete}
-        />
+        />,
+        document.body
       )}
     </>
   );

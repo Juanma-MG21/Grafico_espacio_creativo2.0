@@ -26,6 +26,39 @@ export default function ImageVisor({ images, initialIndex = 0, onClose }) {
     setIndex((i) => (i - 1 + images.length) % images.length);
   }, [images.length, resetZoom]);
 
+  const containerRef = useRef(null);
+
+  // Bloquea scroll sin desplazar la página + wheel con passive:false
+  useEffect(() => {
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.overflow = "hidden";
+    const el = containerRef.current;
+    const onWheel = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const delta = e.deltaY < 0 ? 0.2 : -0.2;
+      setScale((s) => {
+        const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, s + delta));
+        if (next === MIN_SCALE) setTranslate({ x: 0, y: 0 });
+        return next;
+      });
+    };
+    el?.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "";
+      window.scrollTo(0, scrollY);
+      el?.removeEventListener("wheel", onWheel);
+    };
+  }, []);
+
   // Teclado
   useEffect(() => {
     const handler = (e) => {
@@ -36,17 +69,6 @@ export default function ImageVisor({ images, initialIndex = 0, onClose }) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose, goNext, goPrev]);
-
-  // Zoom con rueda
-  const handleWheel = (e) => {
-    e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.2 : -0.2;
-    setScale((s) => {
-      const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, s + delta));
-      if (next === MIN_SCALE) setTranslate({ x: 0, y: 0 });
-      return next;
-    });
-  };
 
   // Arrastre
   const onMouseDown = (e) => {
@@ -102,8 +124,8 @@ export default function ImageVisor({ images, initialIndex = 0, onClose }) {
 
       {/* Imagen */}
       <div
+        ref={containerRef}
         className="relative w-full h-full flex items-center justify-center overflow-hidden"
-        onWheel={handleWheel}
         style={{ cursor: scale > 1 ? "grab" : "default" }}
       >
         <img
